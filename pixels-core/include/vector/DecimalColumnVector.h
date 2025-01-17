@@ -26,6 +26,11 @@ public:
     void * current() override;
 	int getPrecision();
 	int getScale();
+
+    virtual void ensureSize(uint64_t size, bool preserveData) override;
+    virtual void add(std::string &value) override;
+    virtual void add(int64_t value) override;
+    virtual void add(int value) override;
 };
 
 #endif //PIXELS_DECIMALCOLUMNVECTOR_H
