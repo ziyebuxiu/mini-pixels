@@ -28,11 +28,15 @@
 #include "ColumnWriter.h"
 #include "utils/EncodingUtils.h"
 
-class DecimalColumnWriter :public  ColumnWriter{
+class DecimalColumnWriter : public ColumnWriter
+{
 public:
-    DecimalColumnWriter(std::shared_ptr<TypeDescription> type,std::shared_ptr<PixelsWriterOption> writerOption);
+    DecimalColumnWriter(std::shared_ptr<TypeDescription> type, std::shared_ptr<PixelsWriterOption> writerOption);
     int write(std::shared_ptr<ColumnVector> vector, int length) override;
     bool decideNullsPadding(std::shared_ptr<PixelsWriterOption> writerOption) override;
+
+private:
+    std::vector<long> curPixelVector;
 };
 
-#endif //DUCKDB_DECIMALCOLUMNWRITER_H
+#endif // DUCKDB_DECIMALCOLUMNWRITER_H
