@@ -27,11 +27,11 @@ TimestampColumnWriter::TimestampColumnWriter(std::shared_ptr<TypeDescription> ty
     runlengthEncoding = encodingLevel.ge(EncodingLevel::Level::EL2);
     if (runlengthEncoding)
     {
-        encoder = std::make_unique<RunLenIntEncoder>(1, 1);
+        encoder = std::make_unique<RunLenIntEncoder>();
     }
 }
 
-int TimestampColumnWriter::write(std::shared_ptr<ColumnVector> vector, int size)
+int TimestampColumnWriter::write(std::shared_ptr<ColumnVector> vector, int length)
 {
     auto columnVector = std::static_pointer_cast<TimestampColumnVector>(vector);
     if (!columnVector)
@@ -41,15 +41,17 @@ int TimestampColumnWriter::write(std::shared_ptr<ColumnVector> vector, int size)
     long *timestamps = columnVector->times;
     int curPartLength;         // size of the partition which belongs to current pixel
     int curPartOffset = 0;     // starting offset of the partition which belongs to current pixel
-    int nextPartLength = size; // size of the partition which belongs to next pixel
+    int nextPartLength = length; // size of the partition which belongs to next pixel
     while ((curPixelIsNullIndex + nextPartLength) >= pixelStride)
     {
         curPartLength = pixelStride - curPixelIsNullIndex;
         writeCurPartTimestamp(columnVector, timestamps, curPartLength, curPartOffset);
         newPixel();
         curPartOffset += curPartLength;
-        nextPartLength = size - curPartOffset;
+        nextPartLength = length - curPartOffset;
     }
+    curPartLength = nextPartLength;
+    writeCurPartTime(columnVector, dates, curPartLength, curPartOffset);
     return outputStream->getWritePos();
 }
 
@@ -66,9 +68,12 @@ void TimestampColumnWriter::writeCurPartTimestamp(std::shared_ptr<ColumnVector> 
 {
     for (int i = 0; i < curPartLength; i++)
     {
+        curPixelEleIndex++;
         if (columnVector->isNull[i + curPartOffset])
         {
-            curPixelVector[curPixelVectorIndex++] = 0;
+            hasNull = true;
+            if(nullsPadding)
+                curPixelVector[curPixelVectorIndex++] = 0;
         }
         else
         {
@@ -79,6 +84,14 @@ void TimestampColumnWriter::writeCurPartTimestamp(std::shared_ptr<ColumnVector> 
     curPixelIsNullIndex += curPartLength;
 }
 
+bool TimestampColumnWriter::decideNullsPadding(std::shared_ptr<PixelsWriterOption> writerOption)
+{
+    if (writerOption->getEncodingLevel().ge(EncodingLevel::Level::EL2))
+    {
+        return false;
+    }
+    return writerOption->isNullsPadding();
+}
 
 void TimestampColumnWriter::newPixel()
 {
@@ -91,7 +104,6 @@ void TimestampColumnWriter::newPixel()
     }
     else
     {
-        std::cout << "no runlength encoding" << std::endl;
         std::shared_ptr<ByteBuffer> curVecPartitionBuffer;
         EncodingUtils encodingUtils;
         curVecPartitionBuffer = std::make_shared<ByteBuffer>(curPixelVectorIndex * sizeof(int));
@@ -130,11 +142,3 @@ pixels::proto::ColumnEncoding TimestampColumnWriter::getColumnChunkEncoding()
 }
 
 
-bool TimestampColumnWriter::decideNullsPadding(std::shared_ptr<PixelsWriterOption> writerOption)
-{
-    if (writerOption->getEncodingLevel().ge(EncodingLevel::Level::EL2))
-    {
-        return false;
-    }
-    return writerOption->isNullsPadding();
-}

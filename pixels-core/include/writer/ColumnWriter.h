@@ -80,7 +80,7 @@ protected:
 //std::unique_ptr<Encoder> encoder;
     StatsRecorder pixelStatRecorder;
     StatsRecorder columnChunkStatRecorder;
-bool hasNull = false;
+    bool hasNull = false;
     const bool nullsPadding;
     int curPixelVectorIndex = 0;
     const ByteOrder byteOrder;

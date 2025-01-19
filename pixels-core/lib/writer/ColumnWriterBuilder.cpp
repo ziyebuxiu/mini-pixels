@@ -32,6 +32,12 @@ std::shared_ptr<ColumnWriter> ColumnWriterBuilder::newColumnWriter(std::shared_p
         case TypeDescription::LONG:
 //            return std::dynamic_pointer_cast<ColumnWriter,IntegerColumnWriter>(std::make_shared<IntegerColumnWriter>(type, writerOption));
             return std::make_shared<IntegerColumnWriter>(type, writerOption);
+        case TypeDescription::DATE:
+            return std::make_shared<DateColumnWriter>(type, writerOption);
+        case TypeDescription::TIMESTAMP:
+            return std::make_shared<TimestampColumnWriter>(type, writerOption);
+        case TypeDescription::DECIMAL:
+            return std::make_shared<DecimalColumnWriter>(type, writerOption);
         case TypeDescription::BOOLEAN:
             break;
         case TypeDescription::BYTE:

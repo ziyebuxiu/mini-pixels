@@ -38,7 +38,7 @@ int DateColumnWriter::write(std::shared_ptr<ColumnVector> vector, int length)
     int *dates = columnVector->dates;
     int curPartLength;         // size of the partition which belongs to current pixel
     int curPartOffset = 0;     // starting offset of the partition which belongs to current pixel
-    int nextPartLength = size; // size of the partition which belongs to next pixel
+    int nextPartLength = length; // size of the partition which belongs to next pixel
 
     while ((curPixelIsNullIndex + nextPartLength) >= pixelStride)
     {
@@ -46,7 +46,7 @@ int DateColumnWriter::write(std::shared_ptr<ColumnVector> vector, int length)
         writeCurPartTime(columnVector, dates, curPartLength, curPartOffset);
         newPixel();
         curPartOffset += curPartLength;
-        nextPartLength = size - curPartOffset;
+        nextPartLength = length - curPartOffset;
     }
 
     curPartLength = nextPartLength;
